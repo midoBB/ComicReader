@@ -1,0 +1,10 @@
+# Path to the directory containing your CBZ comic files
+library_path: /var/lib/comicreader/comics
+
+# Port to listen on
+port: 8386
+
+# Address to bind to (0.0.0.0 = all interfaces, 127.0.0.1 = localhost only)
+host: "0.0.0.0"
+
+# Note: the database (data.db) is always created in the same directory as this config file
