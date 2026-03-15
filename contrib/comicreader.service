@@ -14,7 +14,7 @@ WorkingDirectory=/etc/comicreader
 # Hardening
 NoNewPrivileges=true
 ProtectSystem=strict
-ProtectHome=true
+ProtectHome=read-only
 ReadWritePaths=/etc/comicreader /var/lib/comicreader
 
 [Install]
