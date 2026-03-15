@@ -1,7 +1,7 @@
 import type { AllMetaResponse, ComicListResponse, ComicMeta, PageListResponse } from '../types/api'
 
-export async function fetchComics(): Promise<ComicListResponse> {
-  const res = await fetch('/api/comics')
+export async function fetchComics(page = 1, pageSize = 24): Promise<ComicListResponse> {
+  const res = await fetch(`/api/comics?page=${page}&page_size=${pageSize}`)
   if (!res.ok) throw new Error(`Failed to fetch comics: ${res.status}`)
   return res.json()
 }

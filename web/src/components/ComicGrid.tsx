@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAllMeta } from '../hooks/useAllMeta'
 import { useComics } from '../hooks/useComics'
 import { ComicCard } from './ComicCard'
@@ -6,14 +6,32 @@ import { ComicCard } from './ComicCard'
 type Filter = 'all' | 'favorites' | 'new'
 
 export function ComicGrid() {
-  const { comics, loading, error } = useComics()
+  const { comics, hasMore, loading, error, loadMore } = useComics()
   const { meta, updateLocalFavorite } = useAllMeta()
   const [filter, setFilter] = useState<Filter>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading…</div>
-  if (error) return <div style={{ padding: 40, color: '#f55', textAlign: 'center' }}>{error}</div>
-  if (comics.length === 0) return <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>No comics found.</div>
+  // Initial load
+  useEffect(() => {
+    loadMore()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // IntersectionObserver to trigger next page load
+  useEffect(() => {
+    if (!sentinelRef.current) return
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          loadMore()
+        }
+      },
+      { rootMargin: '200px' }
+    )
+    observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, loading, loadMore])
 
   const afterFilter = filter === 'favorites'
     ? comics.filter(c => meta[c.slug]?.is_favorite)
@@ -35,6 +53,8 @@ export function ComicGrid() {
   const btnActive: React.CSSProperties = {
     ...btnBase, background: '#333', color: '#fff', borderColor: '#888',
   }
+
+  if (error) return <div style={{ padding: 40, color: '#f55', textAlign: 'center' }}>{error}</div>
 
   return (
     <div>
@@ -67,7 +87,10 @@ export function ComicGrid() {
           }}
         />
       </div>
-      {visible.length === 0 && (
+      {!loading && comics.length === 0 && (
+        <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>No comics found.</div>
+      )}
+      {visible.length === 0 && comics.length > 0 && (
         <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>
           {searchQuery.trim() !== ''
             ? `No comics match "${searchQuery}".`
@@ -93,6 +116,10 @@ export function ComicGrid() {
           />
         ))}
       </div>
+      {loading && (
+        <div style={{ padding: 24, textAlign: 'center', color: '#888' }}>Loading…</div>
+      )}
+      <div ref={sentinelRef} style={{ height: 1 }} />
     </div>
   )
 }

@@ -2,17 +2,23 @@ package cbz
 
 import (
 	"archive/zip"
+	"bytes"
 	"fmt"
+	"image"
+	"image/draw"
+	"image/jpeg"
+	_ "image/gif"
+	_ "image/png"
 	"io"
 	"mime"
+	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/facette/natsort"
+	xdraw "golang.org/x/image/draw"
+	_ "golang.org/x/image/webp"
 )
-
-var thumbnailCache sync.Map
 
 var imageExts = map[string]bool{
 	".jpg": true, ".jpeg": true, ".png": true,
@@ -104,11 +110,14 @@ func OpenPage(cbzPath string, pageIdx int) (*PageResult, error) {
 	return nil, fmt.Errorf("file not found in archive")
 }
 
-// Thumbnail returns the raw bytes of the first image, cached after first call.
-func Thumbnail(cbzPath string) ([]byte, string, error) {
-	if v, ok := thumbnailCache.Load(cbzPath); ok {
-		entry := v.([2]interface{})
-		return entry[0].([]byte), entry[1].(string), nil
+// Thumbnail returns a resized JPEG thumbnail for the first page of a CBZ,
+// using a disk cache at cachePath/<slug>.jpg.
+func Thumbnail(cbzPath, cachePath string) ([]byte, string, error) {
+	slug := strings.TrimSuffix(filepath.Base(cbzPath), filepath.Ext(cbzPath))
+	cacheFile := filepath.Join(cachePath, slug+".jpg")
+
+	if data, err := os.ReadFile(cacheFile); err == nil {
+		return data, "image/jpeg", nil
 	}
 
 	pr, err := OpenPage(cbzPath, 0)
@@ -117,11 +126,31 @@ func Thumbnail(cbzPath string) ([]byte, string, error) {
 	}
 	defer pr.RC.Close()
 
-	data, err := io.ReadAll(pr.RC)
+	src, _, err := image.Decode(pr.RC)
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("decode image: %w", err)
 	}
 
-	thumbnailCache.Store(cbzPath, [2]interface{}{data, pr.ContentType})
-	return data, pr.ContentType, nil
+	const maxWidth = 280
+	bounds := src.Bounds()
+	w := bounds.Dx()
+	h := bounds.Dy()
+	if w > maxWidth {
+		h = h * maxWidth / w
+		w = maxWidth
+	}
+
+	dst := image.NewRGBA(image.Rect(0, 0, w, h))
+	xdraw.CatmullRom.Scale(dst, dst.Bounds(), src, src.Bounds(), draw.Over, nil)
+
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 80}); err != nil {
+		return nil, "", fmt.Errorf("encode jpeg: %w", err)
+	}
+
+	if err := os.MkdirAll(cachePath, 0o755); err == nil {
+		os.WriteFile(cacheFile, buf.Bytes(), 0o644)
+	}
+
+	return buf.Bytes(), "image/jpeg", nil
 }

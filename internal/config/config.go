@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	LibraryPath string `yaml:"library_path"`
-	Port        int    `yaml:"port"`
-	Host        string `yaml:"host"`
-	DBPath      string `yaml:"-"`
+	LibraryPath    string `yaml:"library_path"`
+	Port           int    `yaml:"port"`
+	Host           string `yaml:"host"`
+	DBPath         string `yaml:"-"`
+	ThumbCachePath string `yaml:"thumb_cache_path"`
 }
 
 func Load() (*Config, error) {
@@ -37,5 +38,8 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	cfg.DBPath = filepath.Join(filepath.Dir(absConfig), "data.db")
+	if cfg.ThumbCachePath == "" {
+		cfg.ThumbCachePath = filepath.Join(filepath.Dir(absConfig), "thumbcache")
+	}
 	return cfg, nil
 }

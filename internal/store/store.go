@@ -121,8 +121,9 @@ func (s *Store) SetOpened(slug string) error {
 
 // SyncLibrary inserts rows for CBZ files found in libraryPath and deletes rows
 // for slugs that no longer exist on disk. Preserves all existing metadata.
+// Also removes cached thumbnails from thumbCachePath for deleted slugs.
 // Returns the number of slugs added and removed.
-func (s *Store) SyncLibrary(libraryPath string) (added, removed int, err error) {
+func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed int, err error) {
 	entries, err := os.ReadDir(libraryPath)
 	if err != nil {
 		return 0, 0, err
@@ -165,6 +166,9 @@ func (s *Store) SyncLibrary(libraryPath string) (added, removed int, err error) 
 
 	for _, slug := range stale {
 		s.db.Exec(`DELETE FROM comic_meta WHERE slug = ?`, slug)
+		if thumbCachePath != "" {
+			os.Remove(filepath.Join(thumbCachePath, slug+".jpg"))
+		}
 		removed++
 	}
 	return added, removed, nil

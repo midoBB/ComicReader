@@ -62,7 +62,7 @@ func logListenAddrs(logger *slog.Logger, port int) {
 	}
 }
 
-func startWatcher(logger *slog.Logger, s *store.Store, libraryPath string) (*fsnotify.Watcher, error) {
+func startWatcher(logger *slog.Logger, s *store.Store, libraryPath, thumbCachePath string) (*fsnotify.Watcher, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func startWatcher(logger *slog.Logger, s *store.Store, libraryPath string) (*fsn
 					debounce.Stop()
 				}
 				debounce = time.AfterFunc(2*time.Second, func() {
-					added, removed, err := s.SyncLibrary(libraryPath)
+					added, removed, err := s.SyncLibrary(libraryPath, thumbCachePath)
 					if err != nil {
 						logger.Error("failed to sync library", "err", err)
 					} else {
@@ -133,7 +133,7 @@ func main() {
 	defer s.Close()
 	logger.Info("store opened", "db", cfg.DBPath)
 
-	added, removed, err := s.SyncLibrary(cfg.LibraryPath)
+	added, removed, err := s.SyncLibrary(cfg.LibraryPath, cfg.ThumbCachePath)
 	if err != nil {
 		logger.Error("failed to sync library", "err", err)
 		os.Exit(1)
@@ -150,7 +150,7 @@ func main() {
 	h.RegisterRoutes(e)
 	e.GET("/*", echo.WrapHandler(api.NewSPAHandler(staticFS)))
 
-	watcher, err := startWatcher(logger, s, cfg.LibraryPath)
+	watcher, err := startWatcher(logger, s, cfg.LibraryPath, cfg.ThumbCachePath)
 	if err != nil {
 		logger.Error("failed to start watcher", "err", err)
 		os.Exit(1)
@@ -173,7 +173,7 @@ func main() {
 	for sig := range quit {
 		if sig == syscall.SIGHUP {
 			logger.Info("received SIGHUP, resyncing library")
-			added, removed, err := s.SyncLibrary(cfg.LibraryPath)
+			added, removed, err := s.SyncLibrary(cfg.LibraryPath, cfg.ThumbCachePath)
 			if err != nil {
 				logger.Error("failed to sync library", "err", err)
 			} else {

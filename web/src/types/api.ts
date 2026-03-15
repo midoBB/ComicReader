@@ -6,6 +6,9 @@ export interface Comic {
 
 export interface ComicListResponse {
   comics: Comic[]
+  total: number
+  page: number
+  page_size: number
 }
 
 export interface PageListResponse {
