@@ -31,12 +31,15 @@ curl -fsSL "$URL" | tar -xz -C "$TMPDIR"
 DIR="$(ls -d "$TMPDIR"/comicreader-*/)"
 
 # Binary
-install -Dm755 "${DIR}comicreader" "${BIN_DIR}/comicreader"
+mkdir -p "$BIN_DIR"
+cp "${DIR}comicreader" "${BIN_DIR}/comicreader"
+chmod 755 "${BIN_DIR}/comicreader"
 
 # Config (don't overwrite existing)
 if [ ! -f "${CONF_DIR}/config.yaml" ]; then
   mkdir -p "$CONF_DIR"
-  install -Dm644 "${DIR}config.yaml" "${CONF_DIR}/config.yaml"
+  cp "${DIR}config.yaml" "${CONF_DIR}/config.yaml"
+  chmod 644 "${CONF_DIR}/config.yaml"
   echo "Config installed to ${CONF_DIR}/config.yaml — edit it before starting the service."
 else
   echo "Existing config at ${CONF_DIR}/config.yaml left unchanged."
@@ -47,7 +50,8 @@ mkdir -p "$DATA_DIR"
 
 # Systemd user unit
 mkdir -p "$SYSD_DIR"
-install -Dm644 "${DIR}comicreader.service" "${SYSD_DIR}/comicreader.service"
+cp "${DIR}comicreader.service" "${SYSD_DIR}/comicreader.service"
+chmod 644 "${SYSD_DIR}/comicreader.service"
 systemctl --user daemon-reload
 
 echo ""
