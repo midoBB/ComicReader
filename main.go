@@ -182,7 +182,9 @@ func main() {
 			continue
 		}
 		logger.Info("shutting down", "signal", sig)
-		if err := e.Shutdown(context.Background()); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := e.Shutdown(ctx); err != nil {
 			logger.Error("shutdown error", "err", err)
 		}
 		break

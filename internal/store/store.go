@@ -31,7 +31,7 @@ type Store struct {
 }
 
 func Open(dbPath string) (*Store, error) {
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout=5000&_pragma=journal_mode=WAL")
 	if err != nil {
 		return nil, err
 	}
@@ -129,6 +129,12 @@ func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed 
 		return 0, 0, err
 	}
 
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, 0, err
+	}
+	defer tx.Rollback()
+
 	onDisk := make(map[string]struct{})
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.EqualFold(filepath.Ext(entry.Name()), ".cbz") {
@@ -136,7 +142,7 @@ func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed 
 		}
 		slug := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
 		onDisk[slug] = struct{}{}
-		res, execErr := s.db.Exec(`INSERT OR IGNORE INTO comic_meta (slug) VALUES (?)`, slug)
+		res, execErr := tx.Exec(`INSERT OR IGNORE INTO comic_meta (slug) VALUES (?)`, slug)
 		if execErr == nil {
 			if n, _ := res.RowsAffected(); n > 0 {
 				added++
@@ -144,7 +150,7 @@ func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed 
 		}
 	}
 
-	rows, err := s.db.Query(`SELECT slug FROM comic_meta`)
+	rows, err := tx.Query(`SELECT slug FROM comic_meta`)
 	if err != nil {
 		return added, 0, err
 	}
@@ -165,11 +171,15 @@ func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed 
 	}
 
 	for _, slug := range stale {
-		s.db.Exec(`DELETE FROM comic_meta WHERE slug = ?`, slug)
+		tx.Exec(`DELETE FROM comic_meta WHERE slug = ?`, slug)
 		if thumbCachePath != "" {
 			os.Remove(filepath.Join(thumbCachePath, slug+".jpg"))
 		}
 		removed++
+	}
+	
+	if err := tx.Commit(); err != nil {
+		return added, removed, err
 	}
 	return added, removed, nil
 }
