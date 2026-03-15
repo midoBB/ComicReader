@@ -2,10 +2,10 @@
 set -euo pipefail
 
 REPO="midoBB/ComicReader"
-BIN_DIR="/usr/local/bin"
-CONF_DIR="/etc/comicreader"
-DATA_DIR="/var/lib/comicreader/comics"
-SYSD_DIR="/etc/systemd/system"
+BIN_DIR="${HOME}/.local/bin"
+CONF_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/comicreader"
+DATA_DIR="${HOME}/.local/share/comicreader/comics"
+SYSD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
 
 # Detect architecture
 ARCH="$(uname -m)"
@@ -31,26 +31,27 @@ curl -fsSL "$URL" | tar -xz -C "$TMPDIR"
 DIR="$(ls -d "$TMPDIR"/comicreader-*/)"
 
 # Binary
-sudo install -Dm755 "${DIR}comicreader" "${BIN_DIR}/comicreader"
+install -Dm755 "${DIR}comicreader" "${BIN_DIR}/comicreader"
 
 # Config (don't overwrite existing)
 if [ ! -f "${CONF_DIR}/config.yaml" ]; then
-  sudo mkdir -p "$CONF_DIR"
-  sudo install -Dm644 "${DIR}config.yaml" "${CONF_DIR}/config.yaml"
+  mkdir -p "$CONF_DIR"
+  install -Dm644 "${DIR}config.yaml" "${CONF_DIR}/config.yaml"
   echo "Config installed to ${CONF_DIR}/config.yaml — edit it before starting the service."
 else
   echo "Existing config at ${CONF_DIR}/config.yaml left unchanged."
 fi
 
 # Data directory
-sudo mkdir -p "$DATA_DIR"
+mkdir -p "$DATA_DIR"
 
-# Systemd unit
-sudo install -Dm644 "${DIR}comicreader.service" "${SYSD_DIR}/comicreader.service"
-sudo systemctl daemon-reload
+# Systemd user unit
+mkdir -p "$SYSD_DIR"
+install -Dm644 "${DIR}comicreader.service" "${SYSD_DIR}/comicreader.service"
+systemctl --user daemon-reload
 
 echo ""
 echo "Done. Next steps:"
 echo "  1. Edit ${CONF_DIR}/config.yaml"
-echo "  2. sudo systemctl enable --now comicreader"
+echo "  2. systemctl --user enable --now comicreader"
 echo "  3. Open http://<your-server>:8386"

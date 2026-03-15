@@ -4,18 +4,12 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/comicreader -config /etc/comicreader/config.yaml
+ExecStart=%h/.local/bin/comicreader -config %h/.config/comicreader/config.yaml
 Restart=on-failure
 RestartSec=5
 
 # Keep data.db next to the config
-WorkingDirectory=/etc/comicreader
-
-# Hardening
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=/etc/comicreader /var/lib/comicreader
+WorkingDirectory=%h/.config/comicreader
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
