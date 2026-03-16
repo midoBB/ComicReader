@@ -26,20 +26,17 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
   }
 
   return (
-    <div
-      onClick={handleClick}
-      className="comic-card"
-    >
-      <div style={{ position: 'relative' }}>
+    <div onClick={handleClick} className="comic-card">
+      <div className="comic-cover">
         <img
           src={thumbnailUrl(comic.slug)}
           alt={comic.name}
           loading="lazy"
-          style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', display: 'block' }}
         />
-        {isNew && (
-          <div className="badge-new">NEW</div>
-        )}
+        <div className="comic-cover-overlay" />
+
+        {isNew && <div className="badge-new">NEW</div>}
+
         {hasProgress && (
           <button
             onClick={handleContinue}
@@ -49,29 +46,25 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
             ▶ p{lastPage + 1}
           </button>
         )}
+
         <button
-          onClick={e => {
-            e.stopPropagation()
-            onToggleFavorite?.(!isFavorite)
-          }}
+          onClick={e => { e.stopPropagation(); onToggleFavorite?.(!isFavorite) }}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          className={`btn-favorite ${isFavorite ? 'active' : ''}`}
+          className={`btn-favorite${isFavorite ? ' active' : ''}`}
         >
           {isFavorite ? '★' : '☆'}
         </button>
+
         {hasProgress && (
           <div className="progress-track">
             <div className="progress-fill" style={{ width: `${progress * 100}%` }} />
           </div>
         )}
       </div>
-      <div style={{ padding: '12px 12px' }}>
-        <div className="comic-title">
-          {comic.name}
-        </div>
-        <div className="comic-pages">
-          {comic.page_count} pages
-        </div>
+
+      <div className="comic-info">
+        <div className="comic-title">{comic.name}</div>
+        <div className="comic-pages">{comic.page_count} pages</div>
         {hasProgress && (
           <button
             onClick={handleContinue}

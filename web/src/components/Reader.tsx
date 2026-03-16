@@ -60,7 +60,6 @@ export function Reader() {
     }
   }, [slug])
 
-  // Scroll to startPage once pages are rendered
   useEffect(() => {
     if (!data || scrolledToStart.current || startPage === 0) return
     const el = pageRefs.current[startPage]
@@ -70,7 +69,6 @@ export function Reader() {
     }
   })
 
-  // Save progress + update page counter on scroll with 1s debounce
   useEffect(() => {
     if (!slug || !data) return
 
@@ -82,13 +80,8 @@ export function Reader() {
         for (let i = 0; i < pageRefs.current.length; i++) {
           const el = pageRefs.current[i]
           if (!el) continue
-          const rect = el.getBoundingClientRect()
-          const absTop = rect.top + window.scrollY
-          if (absTop <= viewportMid) {
-            page = i
-          } else {
-            break
-          }
+          const absTop = el.getBoundingClientRect().top + window.scrollY
+          if (absTop <= viewportMid) { page = i } else { break }
         }
         setCurrentPage(page)
         setProgress(slug!, page)
@@ -102,8 +95,8 @@ export function Reader() {
     }
   }, [slug, data])
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center' }}>Loading…</div>
-  if (error) return <div style={{ padding: 40, color: '#f55', textAlign: 'center' }}>{error}</div>
+  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)' }}>Loading…</div>
+  if (error) return <div style={{ padding: 40, color: '#e05', textAlign: 'center' }}>{error}</div>
   if (!data) return null
 
   const isFavorite = meta[data.slug]?.is_favorite ?? false
@@ -126,9 +119,7 @@ export function Reader() {
     }
 
     const pairs: number[][] = []
-    for (let i = 0; i < pages.length; i += 2) {
-      pairs.push(pages.slice(i, i + 2))
-    }
+    for (let i = 0; i < pages.length; i += 2) pairs.push(pages.slice(i, i + 2))
     const rtl = settings.spreadDirection === 'rtl'
     return pairs.map(pair => {
       const displayPair = rtl ? [...pair].reverse() : pair
@@ -136,7 +127,7 @@ export function Reader() {
         <div
           key={pair[0]}
           ref={el => { pageRefs.current[pair[0]] = el }}
-          style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', width: '100%', maxWidth, gap: 0 }}
+          style={{ display: 'flex', width: '100%', maxWidth }}
         >
           {displayPair.map(idx => (
             <LazyImage
@@ -153,14 +144,7 @@ export function Reader() {
   }
 
   return (
-    <div style={{ background: '#111', minHeight: '100vh' }}>
-      <style>{`
-        @media not ${MOBILE_QUERY} {
-          .reader-mobile-only { display: none !important; }
-        }
-      `}</style>
-
-      {/* Topbar hide-hint pill — only visible on mobile when topbar is hidden */}
+    <div className="reader-wrap">
       {isMobile && !showTopbar && (
         <div
           className="reader-topbar-hint"
@@ -177,25 +161,18 @@ export function Reader() {
         >
           ←
         </button>
-        <span style={{
-          fontWeight: 600, fontSize: 15,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          minWidth: 0, flex: 1,
-        }}>
-          {data.name}
-        </span>
-        <span className="reader-page-counter">
-          {currentPage + 1} / {totalPages}
-        </span>
+
+        <span className="reader-title">{data.name}</span>
+
+        <span className="reader-page-counter">{currentPage + 1} / {totalPages}</span>
 
         <button
           type="button"
-          className="reader-btn reader-btn-icon reader-mobile-only"
+          className={`reader-btn reader-btn-icon reader-mobile-only${isFavorite ? ' fav-active' : ''}`}
           onClick={() => updateLocalFavorite(data.slug, !isFavorite)}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          style={{ color: isFavorite ? '#e05' : undefined, borderColor: isFavorite ? '#e05' : undefined }}
         >
-          <Heart size={16} fill={isFavorite ? '#e05' : 'none'} />
+          <Heart size={15} fill={isFavorite ? 'currentColor' : 'none'} />
         </button>
 
         <button
@@ -204,7 +181,7 @@ export function Reader() {
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
         >
-          {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
+          {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
         </button>
 
         <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -213,7 +190,7 @@ export function Reader() {
             className="reader-btn reader-btn-icon"
             onClick={() => setShowSettings(v => !v)}
             title="Settings"
-            style={{ fontSize: 16, padding: '6px 10px' }}
+            style={{ fontSize: 15 }}
           >
             ⚙
           </button>
@@ -228,11 +205,9 @@ export function Reader() {
       </div>
 
       <div
+        className="reader-pages"
+        style={settings.pageGaps ? { gap: '1rem' } : undefined}
         onClick={isMobile ? () => setShowTopbar(v => !v) : undefined}
-        style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center',
-          gap: 2, paddingBottom: 40,
-        }}
       >
         {renderPages()}
       </div>

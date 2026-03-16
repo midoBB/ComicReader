@@ -4,6 +4,7 @@ export interface Settings {
   readerWidth: 'constrained' | 'full'
   spreadView: boolean
   spreadDirection: 'rtl' | 'ltr'
+  pageGaps: boolean
   version: number
 }
 
@@ -13,6 +14,7 @@ const defaults: Settings = {
   readerWidth: 'constrained',
   spreadView: false,
   spreadDirection: 'rtl',
+  pageGaps: false,
   version: 1,
 }
 

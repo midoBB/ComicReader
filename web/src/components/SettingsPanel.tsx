@@ -8,20 +8,14 @@ interface Props {
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div
+    <button
+      type="button"
+      className={`toggle ${checked ? 'on' : 'off'}`}
       onClick={() => onChange(!checked)}
-      style={{
-        width: 36, height: 20, borderRadius: 10, cursor: 'pointer', flexShrink: 0,
-        background: checked ? '#4a9eff' : '#555',
-        position: 'relative', transition: 'background 0.2s',
-      }}
+      aria-pressed={checked}
     >
-      <div style={{
-        position: 'absolute', top: 2, left: checked ? 18 : 2,
-        width: 16, height: 16, borderRadius: '50%', background: '#fff',
-        transition: 'left 0.2s',
-      }} />
-    </div>
+      <div className="toggle-thumb" />
+    </button>
   )
 }
 
@@ -33,17 +27,13 @@ function SegmentedSwitch<T extends string>({
   onChange: (v: T) => void
 }) {
   return (
-    <div style={{ display: 'flex', borderRadius: 4, overflow: 'hidden', border: '1px solid #555' }}>
+    <div className="segmented">
       {options.map(opt => (
         <button
           key={opt.value}
+          type="button"
+          className={`segmented-btn ${value === opt.value ? 'active' : 'inactive'}`}
           onClick={() => onChange(opt.value)}
-          style={{
-            flex: 1, padding: '4px 8px', fontSize: 12, border: 'none', cursor: 'pointer',
-            background: value === opt.value ? '#4a9eff' : '#1a1a1a',
-            color: value === opt.value ? '#fff' : '#aaa',
-            transition: 'background 0.15s, color 0.15s',
-          }}
         >
           {opt.label}
         </button>
@@ -52,55 +42,49 @@ function SegmentedSwitch<T extends string>({
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-      <span style={{ fontSize: 13, color: '#ccc' }}>{label}</span>
-      {children}
-    </div>
-  )
-}
-
 export function SettingsPanel({ settings, onChange, onClose }: Props) {
   return (
     <div className="settings-panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontWeight: 600, fontSize: 14 }}>Settings</span>
-        <button
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: 18, lineHeight: 1 }}
-        >
-          ×
-        </button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <span className="settings-title">Settings</span>
+        <button className="settings-close" onClick={onClose}>×</button>
       </div>
 
-      <Row label="Reader width">
+      <div className="settings-row">
+        <span className="settings-label">Reader width</span>
         <SegmentedSwitch
           value={settings.readerWidth}
           options={[
-            { value: 'constrained', label: 'Constrained' },
+            { value: 'constrained', label: 'Fitted' },
             { value: 'full', label: 'Full' },
           ]}
           onChange={v => onChange({ readerWidth: v })}
         />
-      </Row>
+      </div>
 
-      <Row label="Two-page spread">
+      <div className="settings-row">
+        <span className="settings-label">Two-page spread</span>
         <Toggle checked={settings.spreadView} onChange={v => onChange({ spreadView: v })} />
-      </Row>
+      </div>
 
       {settings.spreadView && (
-        <Row label="Spread direction">
+        <div className="settings-row">
+          <span className="settings-label">Direction</span>
           <SegmentedSwitch
             value={settings.spreadDirection}
             options={[
-              { value: 'rtl', label: 'Right to left' },
-              { value: 'ltr', label: 'Left to right' },
+              { value: 'rtl', label: 'R→L' },
+              { value: 'ltr', label: 'L→R' },
             ]}
             onChange={v => onChange({ spreadDirection: v })}
           />
-        </Row>
+        </div>
       )}
+
+      <div className="settings-row">
+        <span className="settings-label">Page gaps</span>
+        <Toggle checked={settings.pageGaps} onChange={v => onChange({ pageGaps: v })} />
+      </div>
     </div>
   )
 }
