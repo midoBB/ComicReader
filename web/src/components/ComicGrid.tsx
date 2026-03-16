@@ -44,34 +44,22 @@ export function ComicGrid() {
     return () => observer.disconnect()
   }, [hasMore, loading, loadMore])
 
-  const btnBase: React.CSSProperties = {
-    background: 'none', border: '1px solid #555', color: '#ccc',
-    padding: '6px 16px', borderRadius: 4, cursor: 'pointer', fontSize: 14,
-    WebkitTapHighlightColor: 'transparent',
-  }
-  const btnActive: React.CSSProperties = {
-    ...btnBase, background: '#333', color: '#fff', borderColor: '#888',
-  }
+  // Removed inline styles and instead using CSS classes from index.css
 
   if (error) return <div style={{ padding: 40, color: '#f55', textAlign: 'center' }}>{error}</div>
 
   return (
     <div>
-      <div style={{
-        padding: '12px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        flexWrap: 'wrap',
-      }}>
-        <button style={filter === 'all' ? btnActive : btnBase} onClick={() => setFilter('all')}>All</button>
-        <button style={filter === 'favorites' ? btnActive : btnBase} onClick={() => setFilter('favorites')}>Favorites</button>
-        <button style={filter === 'new' ? btnActive : btnBase} onClick={() => setFilter('new')}>New</button>
+      <div className="toolbar glass-panel">
+        <button className={`btn-base ${filter === 'all' ? 'btn-active' : ''}`} onClick={() => setFilter('all')}>All</button>
+        <button className={`btn-base ${filter === 'favorites' ? 'btn-active' : ''}`} onClick={() => setFilter('favorites')}>Favorites</button>
+        <button className={`btn-base ${filter === 'new' ? 'btn-active' : ''}`} onClick={() => setFilter('new')}>New</button>
         
         <select 
           value={sort} 
           onChange={e => setSort(e.target.value as Sort)}
-          style={{ ...btnBase, padding: '5px 10px', background: '#1a1a1a' }}
+          className="btn-base"
+          style={{ padding: '6px 10px', background: '#1a1a1a' }}
         >
           <option value="name">Name</option>
           <option value="view_date">Last Viewed</option>
@@ -81,7 +69,7 @@ export function ComicGrid() {
         
         {sort !== 'random' && (
           <button
-            style={{ ...btnBase, padding: '5px 8px', display: 'flex', alignItems: 'center' }}
+            className="btn-base btn-icon"
             onClick={() => setDirection(d => d === 'asc' ? 'desc' : 'asc')}
             title={direction === 'asc' ? 'Ascending' : 'Descending'}
           >
@@ -93,18 +81,7 @@ export function ComicGrid() {
           placeholder="Search…"
           value={searchQuery}
           onChange={e => setSearchQuery(e.target.value)}
-          style={{
-            marginLeft: 'auto',
-            background: '#1a1a1a',
-            border: '1px solid #555',
-            borderRadius: 4,
-            color: '#ccc',
-            fontSize: 14,
-            padding: '6px 10px',
-            outline: 'none',
-            minWidth: 0,
-            width: 'clamp(120px, 30vw, 220px)',
-          }}
+          className="search-input"
         />
       </div>
       {comics.length === 0 && !loading && (

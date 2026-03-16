@@ -29,15 +29,6 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
     <div
       onClick={handleClick}
       className="comic-card"
-      style={{
-        cursor: 'pointer',
-        background: '#1e1e1e',
-        borderRadius: 8,
-        overflow: 'hidden',
-        transition: 'transform 0.15s',
-        position: 'relative',
-        WebkitTapHighlightColor: 'transparent',
-      }}
     >
       <div style={{ position: 'relative' }}>
         <img
@@ -47,28 +38,13 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
           style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', display: 'block' }}
         />
         {isNew && (
-          <div style={{
-            position: 'absolute', top: 6, left: 6,
-            background: '#e53935', color: '#fff',
-            fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
-            padding: '2px 6px', borderRadius: 3,
-            pointerEvents: 'none',
-          }}>NEW</div>
+          <div className="badge-new">NEW</div>
         )}
         {hasProgress && (
           <button
             onClick={handleContinue}
             title={`Continue from page ${lastPage + 1}`}
             className="comic-card-continue-overlay"
-            style={{
-              position: 'absolute', top: 6, left: 6,
-              background: 'rgba(0,0,0,0.7)', color: '#fff',
-              fontSize: 10, fontWeight: 700, letterSpacing: '0.05em',
-              padding: '2px 6px', borderRadius: 3,
-              border: '1px solid rgba(255,255,255,0.25)',
-              cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-            }}
           >
             ▶ p{lastPage + 1}
           </button>
@@ -79,36 +55,21 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
             onToggleFavorite?.(!isFavorite)
           }}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          style={{
-            position: 'absolute', top: 6, right: 6,
-            background: 'rgba(0,0,0,0.55)', border: 'none',
-            borderRadius: '50%', width: 32, height: 32,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: 18, lineHeight: 1,
-            color: isFavorite ? '#f5c542' : '#aaa',
-            WebkitTapHighlightColor: 'transparent',
-          }}
+          className={`btn-favorite ${isFavorite ? 'active' : ''}`}
         >
           {isFavorite ? '★' : '☆'}
         </button>
         {hasProgress && (
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            height: 3, background: 'rgba(0,0,0,0.4)',
-          }}>
-            <div style={{
-              height: '100%',
-              width: `${progress * 100}%`,
-              background: '#4fc3f7',
-            }} />
+          <div className="progress-track">
+            <div className="progress-fill" style={{ width: `${progress * 100}%` }} />
           </div>
         )}
       </div>
-      <div style={{ padding: '8px 10px' }}>
-        <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ padding: '12px 12px' }}>
+        <div className="comic-title">
           {comic.name}
         </div>
-        <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>
+        <div className="comic-pages">
           {comic.page_count} pages
         </div>
         {hasProgress && (
@@ -116,32 +77,11 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
             onClick={handleContinue}
             title={`Continue from page ${lastPage + 1}`}
             className="comic-card-continue-bottom"
-            style={{
-              marginTop: 6,
-              width: '100%',
-              background: '#1a3a4a',
-              color: '#4fc3f7',
-              border: '1px solid #2a5a6a',
-              borderRadius: 4,
-              padding: '6px 0',
-              fontSize: 12,
-              fontWeight: 600,
-              cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-            }}
           >
             ▶ Continue — p{lastPage + 1}
           </button>
         )}
       </div>
-      <style>{`
-        .comic-card:hover { transform: scale(1.03); }
-        .comic-card-continue-bottom { display: none; }
-        @media (max-width: 767px) {
-          .comic-card-continue-overlay { display: none !important; }
-          .comic-card-continue-bottom { display: block; }
-        }
-      `}</style>
     </div>
   )
 }

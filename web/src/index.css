@@ -1,0 +1,274 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-color: #111111;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #1e1e1e;
+  
+  --text-primary: #eeeeee;
+  --text-secondary: #cccccc;
+  --text-tertiary: #888888;
+  
+  --accent-color: #4fc3f7;
+  --accent-secondary: #1a3a4a;
+  --accent-border: #2a5a6a;
+  
+  --border-color: #444;
+  --border-hover: #666;
+  
+  --card-bg: #1e1e1e;
+  --card-hover-bg: #222;
+  
+  --badge-new-bg: linear-gradient(135deg, #ff4b2b, #ff416c);
+  --glass-bg: rgba(26, 26, 26, 0.75);
+  
+  --font-main: 'Outfit', sans-serif;
+  
+  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+body {
+  margin: 0;
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Base button styles */
+.btn-base {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-base:hover {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-active {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 8px rgba(79, 195, 247, 0.15);
+}
+
+.btn-icon {
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Toolbar */
+.toolbar {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.search-input {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  padding: 8px 12px;
+  outline: none;
+  min-width: 0;
+  width: clamp(160px, 30vw, 240px);
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.search-input:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+}
+
+@media (max-width: 600px) {
+  .search-input {
+    width: 100%;
+    margin-left: 0;
+    order: -1; /* Move search to top on mobile */
+  }
+  .toolbar {
+    padding: 10px 12px;
+  }
+}
+
+/* Comic Card Classes */
+.comic-card {
+  background: var(--card-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.comic-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  background: var(--card-hover-bg);
+}
+
+.badge-new {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--badge-new-bg);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.btn-favorite {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: #aaa;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease, background 0.2s ease;
+}
+
+.btn-favorite:hover {
+  transform: scale(1.1);
+  background: rgba(26, 26, 26, 0.9);
+}
+
+.btn-favorite.active {
+  color: #f5c542;
+}
+
+.progress-track {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(0,0,0,0.5);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  box-shadow: 0 0 8px rgba(79, 195, 247, 0.5);
+}
+
+.comic-card-continue-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.15);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.comic-card-continue-overlay:hover {
+  transform: scale(1.05);
+  background: rgba(26,26,26,0.9);
+}
+
+.comic-card-continue-bottom {
+  margin-top: 8px;
+  width: 100%;
+  background: var(--accent-secondary);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-border);
+  border-radius: 4px;
+  padding: 8px 0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  display: none;
+  transition: all 0.2s ease;
+}
+
+.comic-card-continue-bottom:hover {
+  background: var(--bg-tertiary);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+@media (max-width: 767px) {
+  .comic-card-continue-overlay { display: none !important; }
+  .comic-card-continue-bottom { display: block; }
+}
+
+.comic-title {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-primary);
+}
+
+.comic-pages {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
