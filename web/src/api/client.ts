@@ -1,15 +1,20 @@
 import type { AllMetaResponse, ComicListResponse, ComicMeta, PageListResponse } from '../types/api'
 
-export async function fetchComics(page = 1, pageSize = 24, filter = 'all', query = ''): Promise<ComicListResponse> {
+export async function fetchComics(page = 1, pageSize = 24, filter = 'all', query = '', sort = 'name', direction = 'asc', seed = ''): Promise<ComicListResponse> {
   const params = new URLSearchParams({
     page: page.toString(),
-    page_size: pageSize.toString()
+    page_size: pageSize.toString(),
+    sort,
+    direction
   })
   if (filter && filter !== 'all') {
     params.set('filter', filter)
   }
   if (query) {
     params.set('query', query)
+  }
+  if (seed && sort === 'random') {
+    params.set('seed', seed)
   }
   const res = await fetch(`/api/comics?${params.toString()}`)
   if (!res.ok) throw new Error(`Failed to fetch comics: ${res.status}`)

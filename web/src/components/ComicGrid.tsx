@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
+import { ArrowDownAZ, ArrowUpAZ } from 'lucide-react'
 import { useAllMeta } from '../hooks/useAllMeta'
 import { useComics } from '../hooks/useComics'
 import { ComicCard } from './ComicCard'
 
 type Filter = 'all' | 'favorites' | 'new'
+type Sort = 'name' | 'view_date' | 'page_count' | 'random'
+type Direction = 'asc' | 'desc'
 
 export function ComicGrid() {
   const { meta, updateLocalFavorite } = useAllMeta()
   const [filter, setFilter] = useState<Filter>('all')
+  const [sort, setSort] = useState<Sort>('name')
+  const [direction, setDirection] = useState<Direction>('asc')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -17,12 +22,12 @@ export function ComicGrid() {
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const { comics, hasMore, loading, error, loadMore, reset } = useComics(filter, debouncedQuery)
+  const { comics, hasMore, loading, error, loadMore, reset } = useComics(filter, debouncedQuery, sort, direction)
 
   useEffect(() => {
     reset()
     loadMore()
-  }, [filter, debouncedQuery, reset, loadMore])
+  }, [filter, debouncedQuery, sort, direction, reset, loadMore])
 
   // IntersectionObserver to trigger next page load
   useEffect(() => {
@@ -62,6 +67,27 @@ export function ComicGrid() {
         <button style={filter === 'all' ? btnActive : btnBase} onClick={() => setFilter('all')}>All</button>
         <button style={filter === 'favorites' ? btnActive : btnBase} onClick={() => setFilter('favorites')}>Favorites</button>
         <button style={filter === 'new' ? btnActive : btnBase} onClick={() => setFilter('new')}>New</button>
+        
+        <select 
+          value={sort} 
+          onChange={e => setSort(e.target.value as Sort)}
+          style={{ ...btnBase, padding: '5px 10px', background: '#1a1a1a' }}
+        >
+          <option value="name">Name</option>
+          <option value="view_date">Last Viewed</option>
+          <option value="page_count">Page Count</option>
+          <option value="random">Random</option>
+        </select>
+        
+        {sort !== 'random' && (
+          <button
+            style={{ ...btnBase, padding: '5px 8px', display: 'flex', alignItems: 'center' }}
+            onClick={() => setDirection(d => d === 'asc' ? 'desc' : 'asc')}
+            title={direction === 'asc' ? 'Ascending' : 'Descending'}
+          >
+            {direction === 'asc' ? <ArrowDownAZ size={16} /> : <ArrowUpAZ size={16} />}
+          </button>
+        )}
         <input
           type="search"
           placeholder="Search…"

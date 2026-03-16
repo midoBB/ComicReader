@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/midoBB/ComicReader/internal/cbz"
 	_ "modernc.org/sqlite"
 )
 
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS comic_meta (
     is_favorite INTEGER NOT NULL DEFAULT 0,
     opened      INTEGER NOT NULL DEFAULT 0,
     last_page   INTEGER NOT NULL DEFAULT 0,
+    page_count  INTEGER NOT NULL DEFAULT 0,
     updated_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );`
 
@@ -24,6 +26,8 @@ type ComicMeta struct {
 	IsFavorite bool   `json:"is_favorite"`
 	Opened     bool   `json:"opened"`
 	LastPage   int    `json:"last_page"`
+	PageCount  int    `json:"page_count"`
+	UpdatedAt  string `json:"updated_at"`
 }
 
 type Store struct {
@@ -46,6 +50,7 @@ func Open(dbPath string) (*Store, error) {
 func migrate(db *sql.DB) {
 	db.Exec(`ALTER TABLE comic_meta ADD COLUMN opened INTEGER NOT NULL DEFAULT 0`)
 	db.Exec(`ALTER TABLE comic_meta ADD COLUMN last_page INTEGER NOT NULL DEFAULT 0`)
+	db.Exec(`ALTER TABLE comic_meta ADD COLUMN page_count INTEGER NOT NULL DEFAULT 0`)
 }
 
 func (s *Store) Close() error {
@@ -55,10 +60,10 @@ func (s *Store) Close() error {
 func (s *Store) GetMeta(slug string) (ComicMeta, error) {
 	s.ensureSlug(slug)
 	row := s.db.QueryRow(
-		`SELECT slug, is_favorite, opened, last_page FROM comic_meta WHERE slug = ?`, slug)
+		`SELECT slug, is_favorite, opened, last_page, page_count, updated_at FROM comic_meta WHERE slug = ?`, slug)
 	var m ComicMeta
 	var openedInt int
-	if err := row.Scan(&m.Slug, &m.IsFavorite, &openedInt, &m.LastPage); err != nil {
+	if err := row.Scan(&m.Slug, &m.IsFavorite, &openedInt, &m.LastPage, &m.PageCount, &m.UpdatedAt); err != nil {
 		return ComicMeta{Slug: slug}, err
 	}
 	m.Opened = openedInt == 1
@@ -66,7 +71,7 @@ func (s *Store) GetMeta(slug string) (ComicMeta, error) {
 }
 
 func (s *Store) GetAllMeta() (map[string]ComicMeta, error) {
-	rows, err := s.db.Query(`SELECT slug, is_favorite, opened, last_page FROM comic_meta`)
+	rows, err := s.db.Query(`SELECT slug, is_favorite, opened, last_page, page_count, updated_at FROM comic_meta`)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +81,7 @@ func (s *Store) GetAllMeta() (map[string]ComicMeta, error) {
 	for rows.Next() {
 		var m ComicMeta
 		var openedInt int
-		if err := rows.Scan(&m.Slug, &m.IsFavorite, &openedInt, &m.LastPage); err != nil {
+		if err := rows.Scan(&m.Slug, &m.IsFavorite, &openedInt, &m.LastPage, &m.PageCount, &m.UpdatedAt); err != nil {
 			return nil, err
 		}
 		m.Opened = openedInt == 1
@@ -142,6 +147,7 @@ func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed 
 		}
 		slug := strings.TrimSuffix(entry.Name(), filepath.Ext(entry.Name()))
 		onDisk[slug] = struct{}{}
+
 		res, execErr := tx.Exec(`INSERT OR IGNORE INTO comic_meta (slug) VALUES (?)`, slug)
 		if execErr == nil {
 			if n, _ := res.RowsAffected(); n > 0 {
@@ -181,7 +187,41 @@ func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed 
 	if err := tx.Commit(); err != nil {
 		return added, removed, err
 	}
+
+	// Backfill page_count for rows that still have 0 (new inserts and
+	// pre-migration rows from an already-deployed DB). Runs in background
+	// so it doesn't block the HTTP server on startup.
+	go s.backfillPageCounts(libraryPath)
+
 	return added, removed, nil
+}
+
+// backfillPageCounts populates page_count for any row where it is 0.
+// Safe to call concurrently — each UPDATE is independent.
+func (s *Store) backfillPageCounts(libraryPath string) {
+	rows, err := s.db.Query(`SELECT slug FROM comic_meta WHERE page_count = 0`)
+	if err != nil {
+		return
+	}
+	var slugs []string
+	for rows.Next() {
+		var slug string
+		if rows.Scan(&slug) == nil {
+			slugs = append(slugs, slug)
+		}
+	}
+	rows.Close()
+	if rows.Err() != nil {
+		return
+	}
+
+	for _, slug := range slugs {
+		images, err := cbz.ListImages(filepath.Join(libraryPath, slug+".cbz"))
+		if err != nil || len(images) == 0 {
+			continue
+		}
+		s.db.Exec(`UPDATE comic_meta SET page_count = ? WHERE slug = ?`, len(images), slug)
+	}
 }
 
 // ensureSlug inserts a default row if absent (best-effort, ignore error).

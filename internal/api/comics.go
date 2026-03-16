@@ -1,11 +1,15 @@
 package api
 
 import (
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/facette/natsort"
 
 	"github.com/labstack/echo/v4"
 	"github.com/midoBB/ComicReader/internal/cbz"
@@ -40,6 +44,22 @@ func (h *Handler) listComics(c echo.Context) error {
 		}
 	}
 
+	sortParam := c.QueryParam("sort")
+	if sortParam == "" {
+		sortParam = "name"
+	}
+	directionParam := c.QueryParam("direction")
+	if directionParam == "" {
+		directionParam = "asc"
+	}
+	seedParam := c.QueryParam("seed")
+	var seed int64
+	if seedParam != "" {
+		if s, err := strconv.ParseInt(seedParam, 10, 64); err == nil {
+			seed = s
+		}
+	}
+
 	filterParam := c.QueryParam("filter")
 	searchQuery := c.QueryParam("query")
 
@@ -50,18 +70,18 @@ func (h *Handler) listComics(c echo.Context) error {
 	}
 
 	var metaMap map[string]store.ComicMeta
-	if filterParam != "" {
-		metaMap, err = h.store.GetAllMeta()
-		if err != nil {
-			h.logger.Warn("failed to fetch meta for filtering", "err", err)
-			metaMap = make(map[string]store.ComicMeta)
-		}
+	metaMap, err = h.store.GetAllMeta()
+	if err != nil {
+		h.logger.Warn("failed to fetch meta", "err", err)
+		metaMap = make(map[string]store.ComicMeta)
 	}
 
 	type entry struct {
-		name string
-		slug string
-		path string
+		name      string
+		slug      string
+		path      string
+		pageCount int
+		updatedAt string
 	}
 
 	var all []entry
@@ -76,8 +96,8 @@ func (h *Handler) listComics(c echo.Context) error {
 			continue
 		}
 
+		m, exists := metaMap[slug]
 		if filterParam != "" {
-			m, exists := metaMap[slug]
 			if filterParam == "favorites" && (!exists || !m.IsFavorite) {
 				continue
 			}
@@ -87,9 +107,39 @@ func (h *Handler) listComics(c echo.Context) error {
 		}
 
 		all = append(all, entry{
-			name: name,
-			slug: slug,
-			path: filepath.Join(h.cfg.LibraryPath, e.Name()),
+			name:      name,
+			slug:      slug,
+			path:      filepath.Join(h.cfg.LibraryPath, e.Name()),
+			pageCount: m.PageCount,
+			updatedAt: m.UpdatedAt,
+		})
+	}
+
+	if sortParam == "random" {
+		rng := rand.New(rand.NewSource(seed))
+		rng.Shuffle(len(all), func(i, j int) {
+			all[i], all[j] = all[j], all[i]
+		})
+	} else {
+		sort.Slice(all, func(i, j int) bool {
+			a, b := i, j
+			if directionParam == "desc" {
+				a, b = j, i
+			}
+			switch sortParam {
+			case "view_date":
+				if all[a].updatedAt == all[b].updatedAt {
+					return natsort.Compare(all[a].name, all[b].name)
+				}
+				return all[a].updatedAt < all[b].updatedAt
+			case "page_count":
+				if all[a].pageCount == all[b].pageCount {
+					return natsort.Compare(all[a].name, all[b].name)
+				}
+				return all[a].pageCount < all[b].pageCount
+			default: // "name"
+				return natsort.Compare(all[a].name, all[b].name)
+			}
 		})
 	}
 
@@ -112,15 +162,19 @@ func (h *Handler) listComics(c echo.Context) error {
 
 	var comics []Comic
 	for _, e := range slice {
-		images, err := cbz.ListImages(e.path)
-		if err != nil {
-			h.logger.Warn("skipping unreadable CBZ", "file", e.name, "err", err)
-			continue
+		pc := e.pageCount
+		if pc == 0 {
+			images, err := cbz.ListImages(e.path)
+			if err != nil {
+				h.logger.Warn("skipping unreadable CBZ", "file", e.name, "err", err)
+				continue
+			}
+			pc = len(images)
 		}
 		comics = append(comics, Comic{
 			Slug:      e.slug,
 			Name:      e.name,
-			PageCount: len(images),
+			PageCount: pc,
 		})
 	}
 
