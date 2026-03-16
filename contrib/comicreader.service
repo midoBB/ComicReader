@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/bin/comicreader -config %h/.config/comicreader/config.yaml
+ExecStart=%h/.local/bin/comicreader --config %h/.config/comicreader/config.yaml
 Restart=on-failure
 RestartSec=5
 
