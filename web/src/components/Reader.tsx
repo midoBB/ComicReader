@@ -1,7 +1,6 @@
 import { Heart, Maximize, Minimize } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
-import { useQueryState, parseAsInteger } from 'nuqs'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { markOpened, pageUrl, setProgress } from '../api/client'
 import { useAllMeta } from '../hooks/useAllMeta'
 import { useComic } from '../hooks/useComic'
@@ -13,6 +12,7 @@ const MOBILE_QUERY = '(hover: none) and (pointer: coarse)'
 
 export function Reader() {
   const { slug } = useParams<{ slug: string }>()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { data, loading, error } = useComic(slug ?? '')
   const { settings, updateSettings } = useSettings()
@@ -22,10 +22,11 @@ export function Reader() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches)
   const [currentPage, setCurrentPage] = useState(0)
-  const [startPage] = useQueryState('page', parseAsInteger.withDefault(0))
+  const startPage = parseInt(searchParams.get('page') ?? '0', 10) || 0
   const pageRefs = useRef<(HTMLImageElement | HTMLDivElement | null)[]>([])
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrolledToStart = useRef(false)
+  const lastScrollY = useRef(0)
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_QUERY)
@@ -95,6 +96,22 @@ export function Reader() {
     }
   }, [slug, data])
 
+  useEffect(() => {
+    function handleScrollDir() {
+      const y = window.scrollY
+      if (y < 80) {
+        setShowTopbar(true)
+      } else if (y > lastScrollY.current + 4) {
+        setShowTopbar(false)
+      } else if (y < lastScrollY.current - 4) {
+        setShowTopbar(true)
+      }
+      lastScrollY.current = y
+    }
+    window.addEventListener('scroll', handleScrollDir, { passive: true })
+    return () => window.removeEventListener('scroll', handleScrollDir)
+  }, [])
+
   if (loading) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-3)' }}>Loading…</div>
   if (error) return <div style={{ padding: 40, color: '#e05', textAlign: 'center' }}>{error}</div>
   if (!data) return null
@@ -145,15 +162,7 @@ export function Reader() {
 
   return (
     <div className="reader-wrap">
-      {isMobile && !showTopbar && (
-        <div
-          className="reader-topbar-hint"
-          onClick={() => setShowTopbar(true)}
-          title="Show controls"
-        />
-      )}
-
-      <div className={`reader-topbar${isMobile && !showTopbar ? ' hidden' : ''}`}>
+      <div className={`reader-topbar${!showTopbar ? ' hidden' : ''}`}>
         <button
           type="button"
           className="reader-btn reader-btn-back"
@@ -168,7 +177,7 @@ export function Reader() {
 
         <button
           type="button"
-          className={`reader-btn reader-btn-icon reader-mobile-only${isFavorite ? ' fav-active' : ''}`}
+          className={`reader-btn reader-btn-icon${isFavorite ? ' fav-active' : ''}`}
           onClick={() => updateLocalFavorite(data.slug, !isFavorite)}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
         >
@@ -177,7 +186,7 @@ export function Reader() {
 
         <button
           type="button"
-          className="reader-btn reader-btn-icon reader-mobile-only"
+          className="reader-btn reader-btn-icon"
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
         >
@@ -207,7 +216,7 @@ export function Reader() {
       <div
         className="reader-pages"
         style={settings.pageGaps ? { gap: '1rem' } : undefined}
-        onClick={isMobile ? () => setShowTopbar(v => !v) : undefined}
+
       >
         {renderPages()}
       </div>
