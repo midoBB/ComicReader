@@ -17,6 +17,29 @@ func NewSPAHandler(fsys fs.FS, version string) SPAHandler {
 	return SPAHandler{fsys: fsys, version: version}
 }
 
+func isHashedAsset(path string) bool {
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	name := strings.TrimSuffix(base, ext)
+	// Vite hashes assets as "name-[hash].ext" where hash is 8 hex chars
+	if idx := strings.LastIndex(name, "-"); idx != -1 {
+		hash := name[idx+1:]
+		if len(hash) >= 8 {
+			allHex := true
+			for _, c := range hash {
+				if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+					allHex = false
+					break
+				}
+			}
+			if allHex {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (s SPAHandler) serveFile(w http.ResponseWriter, r *http.Request, path string) {
 	data, err := fs.ReadFile(s.fsys, path)
 	if err != nil {
@@ -28,12 +51,16 @@ func (s SPAHandler) serveFile(w http.ResponseWriter, r *http.Request, path strin
 		ct = http.DetectContentType(data)
 	}
 	if s.version != "dev" {
-		etag := `"` + s.version + `"`
-		w.Header().Set("Cache-Control", "public, max-age=86400, immutable")
-		w.Header().Set("ETag", etag)
-		if r.Header.Get("If-None-Match") == etag {
-			w.WriteHeader(http.StatusNotModified)
-			return
+		if isHashedAsset(path) {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		} else {
+			etag := `"` + s.version + `"`
+			w.Header().Set("Cache-Control", "no-cache")
+			w.Header().Set("ETag", etag)
+			if r.Header.Get("If-None-Match") == etag {
+				w.WriteHeader(http.StatusNotModified)
+				return
+			}
 		}
 	}
 	w.Header().Set("Content-Type", ct)
