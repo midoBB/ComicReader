@@ -63,20 +63,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export function SettingsPanel({ settings, onChange, onClose }: Props) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 48,
-        right: 8,
-        background: '#2a2a2a',
-        border: '1px solid #444',
-        borderRadius: 6,
-        padding: '12px 16px',
-        width: 'min(280px, calc(100vw - 16px))',
-        zIndex: 100,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
-      }}
-    >
+    <div className="settings-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <span style={{ fontWeight: 600, fontSize: 14 }}>Settings</span>
         <button

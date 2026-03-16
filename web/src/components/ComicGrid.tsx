@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDownAZ, ArrowUpAZ } from 'lucide-react'
+import { ArrowDownAZ, ArrowUpAZ, ArrowUp } from 'lucide-react'
 import { useAllMeta } from '../hooks/useAllMeta'
 import { useComics } from '../hooks/useComics'
 import { ComicCard } from './ComicCard'
@@ -15,6 +15,7 @@ export function ComicGrid() {
   const [direction, setDirection] = useState<Direction>('asc')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [showScrollTop, setShowScrollTop] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -28,6 +29,12 @@ export function ComicGrid() {
     reset()
     loadMore()
   }, [filter, debouncedQuery, sort, direction, reset, loadMore])
+
+  useEffect(() => {
+    function onScroll() { setShowScrollTop(window.scrollY > 400) }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // IntersectionObserver to trigger next page load
   useEffect(() => {
@@ -114,6 +121,15 @@ export function ComicGrid() {
         <div style={{ padding: 24, textAlign: 'center', color: '#888' }}>Loading…</div>
       )}
       <div ref={sentinelRef} style={{ height: 1 }} />
+      {showScrollTop && (
+        <button
+          className="scroll-to-top"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          title="Back to top"
+        >
+          <ArrowUp size={18} />
+        </button>
+      )}
     </div>
   )
 }

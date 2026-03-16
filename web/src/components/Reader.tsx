@@ -21,6 +21,7 @@ export function Reader() {
   const [showTopbar, setShowTopbar] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches)
+  const [currentPage, setCurrentPage] = useState(0)
   const startPage = parseInt(searchParams.get('page') ?? '0', 10) || 0
   const pageRefs = useRef<(HTMLImageElement | HTMLDivElement | null)[]>([])
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -69,7 +70,7 @@ export function Reader() {
     }
   })
 
-  // Save progress on scroll with 1s debounce
+  // Save progress + update page counter on scroll with 1s debounce
   useEffect(() => {
     if (!slug || !data) return
 
@@ -77,19 +78,20 @@ export function Reader() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(() => {
         const viewportMid = window.scrollY + window.innerHeight / 2
-        let currentPage = 0
+        let page = 0
         for (let i = 0; i < pageRefs.current.length; i++) {
           const el = pageRefs.current[i]
           if (!el) continue
           const rect = el.getBoundingClientRect()
           const absTop = rect.top + window.scrollY
           if (absTop <= viewportMid) {
-            currentPage = i
+            page = i
           } else {
             break
           }
         }
-        setProgress(slug!, currentPage)
+        setCurrentPage(page)
+        setProgress(slug!, page)
       }, 1000)
     }
 
@@ -107,6 +109,7 @@ export function Reader() {
   const isFavorite = meta[data.slug]?.is_favorite ?? false
   const maxWidth = settings.readerWidth === 'constrained' ? 'min(100%, 900px)' : '100%'
   const pages = data.pages.map((_, idx) => idx)
+  const totalPages = data.pages.length
 
   function renderPages() {
     if (!settings.spreadView) {
@@ -149,13 +152,6 @@ export function Reader() {
     })
   }
 
-  const iconBtnStyle: React.CSSProperties = {
-    background: 'none', border: '1px solid #555', color: '#ccc',
-    padding: '6px 10px', borderRadius: 4, cursor: 'pointer',
-    flexShrink: 0, WebkitTapHighlightColor: 'transparent',
-    display: 'flex', alignItems: 'center',
-  }
-
   return (
     <div style={{ background: '#111', minHeight: '100vh' }}>
       <style>{`
@@ -164,22 +160,20 @@ export function Reader() {
         }
       `}</style>
 
-      <div style={{
-        position: 'sticky', top: 0, background: '#1a1a1a', padding: '8px 12px',
-        display: 'flex', alignItems: 'center', gap: 8, zIndex: 10,
-        borderBottom: '1px solid #333',
-        minWidth: 0,
-        transform: (isMobile && !showTopbar) ? 'translateY(-100%)' : 'translateY(0)',
-        transition: 'transform 0.25s ease',
-      }}>
+      {/* Topbar hide-hint pill — only visible on mobile when topbar is hidden */}
+      {isMobile && !showTopbar && (
+        <div
+          className="reader-topbar-hint"
+          onClick={() => setShowTopbar(true)}
+          title="Show controls"
+        />
+      )}
+
+      <div className={`reader-topbar${isMobile && !showTopbar ? ' hidden' : ''}`}>
         <button
           type="button"
+          className="reader-btn reader-btn-back"
           onClick={() => navigate('/')}
-          style={{
-            background: 'none', border: '1px solid #555', color: '#ccc',
-            padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 14,
-            flexShrink: 0, WebkitTapHighlightColor: 'transparent',
-          }}
         >
           ←
         </button>
@@ -190,24 +184,25 @@ export function Reader() {
         }}>
           {data.name}
         </span>
-        <span style={{ color: '#888', fontSize: 12, flexShrink: 0 }}>{data.pages.length}p</span>
+        <span className="reader-page-counter">
+          {currentPage + 1} / {totalPages}
+        </span>
 
         <button
           type="button"
-          className="reader-mobile-only"
+          className="reader-btn reader-btn-icon reader-mobile-only"
           onClick={() => updateLocalFavorite(data.slug, !isFavorite)}
           title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-          style={{ ...iconBtnStyle, color: isFavorite ? '#e05' : '#ccc', borderColor: isFavorite ? '#e05' : '#555' }}
+          style={{ color: isFavorite ? '#e05' : undefined, borderColor: isFavorite ? '#e05' : undefined }}
         >
           <Heart size={16} fill={isFavorite ? '#e05' : 'none'} />
         </button>
 
         <button
           type="button"
-          className="reader-mobile-only"
+          className="reader-btn reader-btn-icon reader-mobile-only"
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          style={iconBtnStyle}
         >
           {isFullscreen ? <Minimize size={16} /> : <Maximize size={16} />}
         </button>
@@ -215,13 +210,10 @@ export function Reader() {
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <button
             type="button"
+            className="reader-btn reader-btn-icon"
             onClick={() => setShowSettings(v => !v)}
             title="Settings"
-            style={{
-              background: 'none', border: '1px solid #555', color: '#ccc',
-              padding: '6px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 16,
-              WebkitTapHighlightColor: 'transparent',
-            }}
+            style={{ fontSize: 16, padding: '6px 10px' }}
           >
             ⚙
           </button>
