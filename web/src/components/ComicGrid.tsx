@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useQueryState, parseAsStringLiteral, parseAsString } from 'nuqs'
 import { ArrowDownAZ, ArrowUpAZ, ArrowUp } from 'lucide-react'
 import { useAllMeta } from '../hooks/useAllMeta'
 import { useComics } from '../hooks/useComics'
@@ -10,11 +11,23 @@ type Direction = 'asc' | 'desc'
 
 export function ComicGrid() {
   const { meta, updateLocalFavorite } = useAllMeta()
-  const [filter, setFilter] = useState<Filter>('all')
-  const [sort, setSort] = useState<Sort>('name')
-  const [direction, setDirection] = useState<Direction>('asc')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [filter, setFilter] = useQueryState<Filter>(
+    'filter',
+    parseAsStringLiteral(['all', 'favorites', 'new'] as const).withDefault('all')
+  )
+  const [sort, setSort] = useQueryState<Sort>(
+    'sort',
+    parseAsStringLiteral(['name', 'view_date', 'page_count', 'random'] as const).withDefault('name')
+  )
+  const [direction, setDirection] = useQueryState<Direction>(
+    'dir',
+    parseAsStringLiteral(['asc', 'desc'] as const).withDefault('asc')
+  )
+  const [searchQuery, setSearchQuery] = useQueryState(
+    'q',
+    parseAsString.withDefault('')
+  )
+  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery)
   const [showScrollTop, setShowScrollTop] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
 

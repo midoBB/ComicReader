@@ -1,6 +1,7 @@
 import { Heart, Maximize, Minimize } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
+import { useQueryState, parseAsInteger } from 'nuqs'
 import { markOpened, pageUrl, setProgress } from '../api/client'
 import { useAllMeta } from '../hooks/useAllMeta'
 import { useComic } from '../hooks/useComic'
@@ -12,7 +13,6 @@ const MOBILE_QUERY = '(hover: none) and (pointer: coarse)'
 
 export function Reader() {
   const { slug } = useParams<{ slug: string }>()
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { data, loading, error } = useComic(slug ?? '')
   const { settings, updateSettings } = useSettings()
@@ -22,7 +22,7 @@ export function Reader() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches)
   const [currentPage, setCurrentPage] = useState(0)
-  const startPage = parseInt(searchParams.get('page') ?? '0', 10) || 0
+  const [startPage] = useQueryState('page', parseAsInteger.withDefault(0))
   const pageRefs = useRef<(HTMLImageElement | HTMLDivElement | null)[]>([])
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const scrolledToStart = useRef(false)
