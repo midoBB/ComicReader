@@ -131,12 +131,12 @@ func (h *Handler) listComics(c echo.Context) error {
 				if all[a].updatedAt == all[b].updatedAt {
 					return natsort.Compare(all[a].name, all[b].name)
 				}
-				return all[a].updatedAt < all[b].updatedAt
+				return all[a].updatedAt > all[b].updatedAt
 			case "page_count":
 				if all[a].pageCount == all[b].pageCount {
 					return natsort.Compare(all[a].name, all[b].name)
 				}
-				return all[a].pageCount < all[b].pageCount
+				return all[a].pageCount > all[b].pageCount
 			default: // "name"
 				return natsort.Compare(all[a].name, all[b].name)
 			}
