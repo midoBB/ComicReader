@@ -3,6 +3,7 @@ package cbz
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"image"
 	"image/draw"
@@ -51,6 +52,7 @@ type PageResult struct {
 	RC          io.ReadCloser
 	ContentType string
 	Size        int64
+	ETag        string
 }
 
 type zipPageReader struct {
@@ -103,6 +105,7 @@ func OpenPage(cbzPath string, pageIdx int) (*PageResult, error) {
 			RC:          &zipPageReader{rc: rc, zipRdr: r},
 			ContentType: ct,
 			Size:        int64(f.UncompressedSize64),
+			ETag:        fmt.Sprintf(`"%08x"`, f.CRC32),
 		}, nil
 	}
 
@@ -111,24 +114,29 @@ func OpenPage(cbzPath string, pageIdx int) (*PageResult, error) {
 }
 
 // Thumbnail returns a resized JPEG thumbnail for the first page of a CBZ,
-// using a disk cache at cachePath/<slug>.jpg.
-func Thumbnail(cbzPath, cachePath string) ([]byte, string, error) {
+// using a disk cache at cachePath/<slug>.jpg. Also returns an ETag.
+func Thumbnail(cbzPath, cachePath string) ([]byte, string, string, error) {
 	slug := strings.TrimSuffix(filepath.Base(cbzPath), filepath.Ext(cbzPath))
 	cacheFile := filepath.Join(cachePath, slug+".jpg")
 
+	etagFor := func(data []byte) string {
+		h := sha256.Sum256(data)
+		return fmt.Sprintf(`"%x"`, h[:8])
+	}
+
 	if data, err := os.ReadFile(cacheFile); err == nil {
-		return data, "image/jpeg", nil
+		return data, "image/jpeg", etagFor(data), nil
 	}
 
 	pr, err := OpenPage(cbzPath, 0)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 	defer pr.RC.Close()
 
 	src, _, err := image.Decode(pr.RC)
 	if err != nil {
-		return nil, "", fmt.Errorf("decode image: %w", err)
+		return nil, "", "", fmt.Errorf("decode image: %w", err)
 	}
 
 	const maxWidth = 280
@@ -145,12 +153,13 @@ func Thumbnail(cbzPath, cachePath string) ([]byte, string, error) {
 
 	var buf bytes.Buffer
 	if err := jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 80}); err != nil {
-		return nil, "", fmt.Errorf("encode jpeg: %w", err)
+		return nil, "", "", fmt.Errorf("encode jpeg: %w", err)
 	}
 
 	if err := os.MkdirAll(cachePath, 0o755); err == nil {
 		os.WriteFile(cacheFile, buf.Bytes(), 0o644)
 	}
 
-	return buf.Bytes(), "image/jpeg", nil
+	data := buf.Bytes()
+	return data, "image/jpeg", etagFor(data), nil
 }

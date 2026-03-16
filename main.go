@@ -158,7 +158,7 @@ func main() {
 
 			h := api.NewHandler(cfg, s, logger)
 			h.RegisterRoutes(e)
-			e.GET("/*", echo.WrapHandler(api.NewSPAHandler(staticFS)))
+			e.GET("/*", echo.WrapHandler(api.NewSPAHandler(staticFS, Version)))
 
 			watcher, err := startWatcher(logger, s, cfg.LibraryPath, cfg.ThumbCachePath)
 			if err != nil {

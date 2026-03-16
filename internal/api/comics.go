@@ -194,11 +194,16 @@ func (h *Handler) getThumbnail(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	data, ct, err := cbz.Thumbnail(cbzPath, h.cfg.ThumbCachePath)
+	data, ct, etag, err := cbz.Thumbnail(cbzPath, h.cfg.ThumbCachePath)
 	if err != nil {
 		h.logger.Error("failed to read thumbnail", "slug", slug, "err", err)
 		return echo.NewHTTPError(http.StatusNotFound, err.Error())
 	}
 
+	c.Response().Header().Set("Cache-Control", "public, max-age=86400, immutable")
+	c.Response().Header().Set("ETag", etag)
+	if c.Request().Header.Get("If-None-Match") == etag {
+		return c.NoContent(http.StatusNotModified)
+	}
 	return c.Blob(http.StatusOK, ct, data)
 }

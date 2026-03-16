@@ -59,6 +59,12 @@ func (h *Handler) getPage(c echo.Context) error {
 	}
 	defer pr.RC.Close()
 
+	c.Response().Header().Set("Cache-Control", "public, max-age=86400, immutable")
+	c.Response().Header().Set("ETag", pr.ETag)
+	if c.Request().Header.Get("If-None-Match") == pr.ETag {
+		pr.RC.Close()
+		return c.NoContent(http.StatusNotModified)
+	}
 	c.Response().Header().Set("Content-Type", pr.ContentType)
 	if pr.Size > 0 {
 		c.Response().Header().Set("Content-Length", strconv.FormatInt(pr.Size, 10))

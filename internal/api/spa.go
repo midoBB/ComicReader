@@ -9,11 +9,12 @@ import (
 )
 
 type SPAHandler struct {
-	fsys fs.FS
+	fsys    fs.FS
+	version string
 }
 
-func NewSPAHandler(fsys fs.FS) SPAHandler {
-	return SPAHandler{fsys: fsys}
+func NewSPAHandler(fsys fs.FS, version string) SPAHandler {
+	return SPAHandler{fsys: fsys, version: version}
 }
 
 func (s SPAHandler) serveFile(w http.ResponseWriter, r *http.Request, path string) {
@@ -25,6 +26,15 @@ func (s SPAHandler) serveFile(w http.ResponseWriter, r *http.Request, path strin
 	ct := mime.TypeByExtension(filepath.Ext(path))
 	if ct == "" {
 		ct = http.DetectContentType(data)
+	}
+	if s.version != "dev" {
+		etag := `"` + s.version + `"`
+		w.Header().Set("Cache-Control", "public, max-age=86400, immutable")
+		w.Header().Set("ETag", etag)
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
 	}
 	w.Header().Set("Content-Type", ct)
 	w.WriteHeader(http.StatusOK)
