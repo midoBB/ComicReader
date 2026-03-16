@@ -52,7 +52,11 @@ export function Reader() {
   }
 
   useEffect(() => {
-    if (slug) markOpened(slug)
+    if (slug) {
+      markOpened(slug)
+      pageRefs.current = []
+      scrolledToStart.current = false
+    }
   }, [slug])
 
   // Scroll to startPage once pages are rendered

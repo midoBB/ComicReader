@@ -9,6 +9,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/midoBB/ComicReader/internal/cbz"
+	"github.com/midoBB/ComicReader/internal/store"
 )
 
 type Comic struct {
@@ -39,10 +40,22 @@ func (h *Handler) listComics(c echo.Context) error {
 		}
 	}
 
+	filterParam := c.QueryParam("filter")
+	searchQuery := c.QueryParam("query")
+
 	entries, err := os.ReadDir(h.cfg.LibraryPath)
 	if err != nil {
 		h.logger.Error("failed to read library directory", "path", h.cfg.LibraryPath, "err", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var metaMap map[string]store.ComicMeta
+	if filterParam != "" {
+		metaMap, err = h.store.GetAllMeta()
+		if err != nil {
+			h.logger.Warn("failed to fetch meta for filtering", "err", err)
+			metaMap = make(map[string]store.ComicMeta)
+		}
 	}
 
 	type entry struct {
@@ -57,9 +70,25 @@ func (h *Handler) listComics(c echo.Context) error {
 			continue
 		}
 		name := strings.TrimSuffix(e.Name(), filepath.Ext(e.Name()))
+		slug := name
+
+		if searchQuery != "" && !strings.Contains(strings.ToLower(name), strings.ToLower(searchQuery)) {
+			continue
+		}
+
+		if filterParam != "" {
+			m, exists := metaMap[slug]
+			if filterParam == "favorites" && (!exists || !m.IsFavorite) {
+				continue
+			}
+			if filterParam == "new" && (exists && m.Opened) {
+				continue
+			}
+		}
+
 		all = append(all, entry{
 			name: name,
-			slug: name,
+			slug: slug,
 			path: filepath.Join(h.cfg.LibraryPath, e.Name()),
 		})
 	}

@@ -28,6 +28,7 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
   return (
     <div
       onClick={handleClick}
+      className="comic-card"
       style={{
         cursor: 'pointer',
         background: '#1e1e1e',
@@ -37,8 +38,6 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
         position: 'relative',
         WebkitTapHighlightColor: 'transparent',
       }}
-      onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.03)')}
-      onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
     >
       <div style={{ position: 'relative' }}>
         <img
@@ -136,6 +135,7 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
         )}
       </div>
       <style>{`
+        .comic-card:hover { transform: scale(1.03); }
         .comic-card-continue-bottom { display: none; }
         @media (max-width: 767px) {
           .comic-card-continue-overlay { display: none !important; }

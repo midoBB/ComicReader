@@ -6,17 +6,23 @@ import { ComicCard } from './ComicCard'
 type Filter = 'all' | 'favorites' | 'new'
 
 export function ComicGrid() {
-  const { comics, hasMore, loading, error, loadMore } = useComics()
   const { meta, updateLocalFavorite } = useAllMeta()
   const [filter, setFilter] = useState<Filter>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  // Initial load
   useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const { comics, hasMore, loading, error, loadMore, reset } = useComics(filter, debouncedQuery)
+
+  useEffect(() => {
+    reset()
     loadMore()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [filter, debouncedQuery, reset, loadMore])
 
   // IntersectionObserver to trigger next page load
   useEffect(() => {
@@ -32,18 +38,6 @@ export function ComicGrid() {
     observer.observe(sentinelRef.current)
     return () => observer.disconnect()
   }, [hasMore, loading, loadMore])
-
-  const afterFilter = filter === 'favorites'
-    ? comics.filter(c => meta[c.slug]?.is_favorite)
-    : filter === 'new'
-      ? comics.filter(c => !(meta[c.slug]?.opened ?? false))
-      : comics
-
-  const visible = searchQuery.trim() === ''
-    ? afterFilter
-    : afterFilter.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
 
   const btnBase: React.CSSProperties = {
     background: 'none', border: '1px solid #555', color: '#ccc',
@@ -87,10 +81,7 @@ export function ComicGrid() {
           }}
         />
       </div>
-      {!loading && comics.length === 0 && (
-        <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>No comics found.</div>
-      )}
-      {visible.length === 0 && comics.length > 0 && (
+      {comics.length === 0 && !loading && (
         <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>
           {searchQuery.trim() !== ''
             ? `No comics match "${searchQuery}".`
@@ -107,7 +98,7 @@ export function ComicGrid() {
         gap: 12,
         padding: '12px 16px 32px',
       }}>
-        {visible.map(c => (
+        {comics.map(c => (
           <ComicCard
             key={c.slug}
             comic={c}
