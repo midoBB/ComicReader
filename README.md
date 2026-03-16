@@ -44,7 +44,7 @@ install -Dm644 config.yaml ~/.config/comicreader/config.yaml
 Edit `~/.config/comicreader/config.yaml`:
 
 ```yaml
-library_path: ~/comics  # directory containing .cbz files
+library_path: /home/user/comics  # absolute directory containing .cbz files
 port: 8386
 host: "0.0.0.0"         # use 127.0.0.1 to bind localhost only
 ```

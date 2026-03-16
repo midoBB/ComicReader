@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"os"
 	"path/filepath"
 
@@ -16,11 +15,8 @@ type Config struct {
 	ThumbCachePath string `yaml:"thumb_cache_path"`
 }
 
-func Load() (*Config, error) {
-	configPath := flag.String("config", "config.yaml", "path to config file")
-	flag.Parse()
-
-	absConfig, err := filepath.Abs(*configPath)
+func Load(configPath string) (*Config, error) {
+	absConfig, err := filepath.Abs(configPath)
 	if err != nil {
 		return nil, err
 	}
