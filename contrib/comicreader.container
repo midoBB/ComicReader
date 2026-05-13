@@ -1,0 +1,12 @@
+[Unit]
+Description=ComicReader Service
+After=network-online.target
+
+[Container]
+Image=comicreader:latest
+PublishPort=8386:8386
+Volume=/path/to/your/comics:/manga:ro
+Volume=comicreader-data:/data
+
+[Install]
+WantedBy=multi-user.target

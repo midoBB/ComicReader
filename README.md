@@ -68,6 +68,53 @@ Then open `http://<your-server>:8386` in a browser.
 > sudo loginctl enable-linger "$USER"
 > ```
 
+## Docker / Podman
+
+### Build the image
+
+```sh
+docker build -t comicreader:latest .
+```
+
+### Run with Docker
+
+```sh
+docker run -d \
+  --name comicreader \
+  -p 8386:8386 \
+  -v /path/to/your/comics:/manga:ro \
+  -v comicreader-data:/data \
+  comicreader:latest
+```
+
+### Run with Podman Quadlet
+
+1. Build the image:
+   ```sh
+   podman build -t comicreader:latest .
+   ```
+
+2. Copy the Quadlet file and edit the manga path:
+   ```sh
+   cp contrib/comicreader.container ~/.config/containers/systemd/comicreader.container
+   # Edit ~/.config/containers/systemd/comicreader.container and set your manga path
+   ```
+
+3. Reload and start the service:
+   ```sh
+   systemctl --user daemon-reload
+   systemctl --user enable --now podman-comicreader.service
+   ```
+
+### Volumes
+
+| Volume | Description |
+|--------|-------------|
+| `/manga` | Mount your CBZ comic library here (read-only recommended) |
+| `/data` | Persistent storage for database and thumbnail cache |
+
+The config is baked into the image at `/etc/comicreader/config.yaml` with sensible defaults.
+
 ## Usage
 
 - Drop `.cbz` files into your `library_path` — the library resyncs automatically.

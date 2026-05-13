@@ -11,7 +11,7 @@ type Config struct {
 	LibraryPath    string `yaml:"library_path"`
 	Port           int    `yaml:"port"`
 	Host           string `yaml:"host"`
-	DBPath         string `yaml:"-"`
+	DBPath         string `yaml:"db_path"`
 	ThumbCachePath string `yaml:"thumb_cache_path"`
 }
 
@@ -33,7 +33,9 @@ func Load(configPath string) (*Config, error) {
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, err
 	}
-	cfg.DBPath = filepath.Join(filepath.Dir(absConfig), "data.db")
+	if cfg.DBPath == "" {
+		cfg.DBPath = filepath.Join(filepath.Dir(absConfig), "data.db")
+	}
 	if cfg.ThumbCachePath == "" {
 		cfg.ThumbCachePath = filepath.Join(filepath.Dir(absConfig), "thumbcache")
 	}

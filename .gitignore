@@ -1,7 +1,8 @@
 .envrc
-node_modules
+node_modules/
 data.db
 data.db-shm
 data.db-wal
-static
+static/*
+!static/.keep
 comicreader
