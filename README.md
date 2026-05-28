@@ -82,7 +82,7 @@ docker build -t comicreader:latest .
 docker run -d \
   --name comicreader \
   -p 8386:8386 \
-  -v /path/to/your/comics:/manga:ro \
+  -v /path/to/your/comics:/manga \
   -v comicreader-data:/data \
   comicreader:latest
 ```
@@ -110,7 +110,7 @@ docker run -d \
 
 | Volume | Description |
 |--------|-------------|
-| `/manga` | Mount your CBZ comic library here (read-only recommended) |
+| `/manga` | Mount your CBZ comic library here with read-write access |
 | `/data` | Persistent storage for database and thumbnail cache |
 
 The config is baked into the image at `/etc/comicreader/config.yaml` with sensible defaults.
@@ -118,5 +118,6 @@ The config is baked into the image at `/etc/comicreader/config.yaml` with sensib
 ## Usage
 
 - Drop `.cbz` files into your `library_path` — the library resyncs automatically.
+- Rename and delete actions operate on the real `.cbz` files in `library_path`; make sure the path is writable and backed up as needed.
 - To force a resync without restarting: `systemctl --user kill -s HUP comicreader`
 - To check logs: `journalctl --user -u comicreader -f`

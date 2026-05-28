@@ -45,5 +45,14 @@ export function useComics(filter: string = 'all', query: string = '', sort: stri
     setSeed(Date.now().toString())
   }, [])
 
-  return { comics, total, hasMore: comics.length < total || page === 0, loading, error, loadMore, reset }
+  const renameLocalComic = useCallback((oldSlug: string, comic: Comic) => {
+    setComics(prev => prev.map(c => c.slug === oldSlug ? comic : c))
+  }, [])
+
+  const deleteLocalComic = useCallback((slug: string) => {
+    setComics(prev => prev.filter(c => c.slug !== slug))
+    setTotal(prev => Math.max(0, prev - 1))
+  }, [])
+
+  return { comics, total, hasMore: comics.length < total || page === 0, loading, error, loadMore, reset, renameLocalComic, deleteLocalComic }
 }

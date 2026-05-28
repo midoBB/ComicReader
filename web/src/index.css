@@ -282,6 +282,72 @@ button, input, select, textarea {
   border-color: rgba(232,160,32,0.3);
 }
 
+.comic-menu-wrap {
+  position: absolute;
+  top: 8px;
+  right: 44px;
+  z-index: 2;
+}
+
+.btn-overflow {
+  background: rgba(14,14,15,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-2);
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s, background 0.2s, transform 0.2s;
+}
+.btn-overflow:hover {
+  background: rgba(14,14,15,0.9);
+  color: var(--text-1);
+  transform: scale(1.12);
+}
+
+.comic-action-menu {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  min-width: 132px;
+  padding: 5px;
+  background: rgba(22,22,24,0.96);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lift);
+}
+.comic-action-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  color: var(--text-2);
+  border-radius: 4px;
+  padding: 8px 9px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+.comic-action-menu button:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+.comic-action-menu button.danger {
+  color: #ff8a8a;
+}
+.comic-action-menu button.danger:hover {
+  background: var(--red-dim);
+  color: #fff;
+}
+
 /* Continue badge on cover */
 .comic-card-continue-overlay {
   position: absolute;
@@ -410,6 +476,92 @@ button, input, select, textarea {
   color: var(--amber);
   border-color: var(--amber);
   transform: translateY(-2px);
+}
+
+/* ── Dialogs ────────────────────────────── */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0,0,0,0.62);
+}
+
+.dialog-panel {
+  width: min(100%, 380px);
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lift);
+  padding: 18px;
+}
+
+.dialog-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 12px;
+}
+
+.dialog-copy {
+  color: var(--text-2);
+  line-height: 1.45;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+}
+
+.dialog-input {
+  width: 100%;
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-1);
+  font-size: 14px;
+  padding: 10px 11px;
+  outline: none;
+}
+.dialog-input:focus {
+  border-color: var(--amber);
+  box-shadow: 0 0 0 3px var(--amber-glow);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.dialog-btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 13px;
+}
+.dialog-btn:hover:not(:disabled) {
+  border-color: var(--amber);
+  color: var(--text-1);
+}
+.dialog-btn.primary {
+  background: var(--amber-dim);
+  border-color: rgba(232,160,32,0.35);
+  color: var(--amber);
+}
+.dialog-btn.danger {
+  background: var(--red-dim);
+  border-color: rgba(224,56,56,0.35);
+  color: #ff8a8a;
+}
+.dialog-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 /* ── Reader ─────────────────────────────── */

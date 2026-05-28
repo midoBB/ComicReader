@@ -124,6 +124,36 @@ func (s *Store) SetOpened(slug string) error {
 	return err
 }
 
+func (s *Store) RenameComic(oldSlug, newSlug string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`DELETE FROM comic_meta WHERE slug = ?`, newSlug); err != nil {
+		return err
+	}
+	res, err := tx.Exec(
+		`UPDATE comic_meta SET slug = ?, updated_at = ? WHERE slug = ?`,
+		newSlug, time.Now().UTC().Format(time.RFC3339), oldSlug,
+	)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		if _, err := tx.Exec(`INSERT OR IGNORE INTO comic_meta (slug) VALUES (?)`, newSlug); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+func (s *Store) DeleteComic(slug string) error {
+	_, err := s.db.Exec(`DELETE FROM comic_meta WHERE slug = ?`, slug)
+	return err
+}
+
 // SyncLibrary inserts rows for CBZ files found in libraryPath and deletes rows
 // for slugs that no longer exist on disk. Preserves all existing metadata.
 // Also removes cached thumbnails from thumbCachePath for deleted slugs.
@@ -183,7 +213,7 @@ func (s *Store) SyncLibrary(libraryPath, thumbCachePath string) (added, removed 
 		}
 		removed++
 	}
-	
+
 	if err := tx.Commit(); err != nil {
 		return added, removed, err
 	}

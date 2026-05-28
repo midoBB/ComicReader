@@ -19,5 +19,25 @@ export function useAllMeta() {
     setFavorite(slug, fav)
   }
 
-  return { meta, updateLocalFavorite }
+  function renameLocalMeta(oldSlug: string, newSlug: string) {
+    setMeta(prev => {
+      const next = { ...prev }
+      const current = next[oldSlug]
+      delete next[oldSlug]
+      if (current) {
+        next[newSlug] = { ...current, slug: newSlug }
+      }
+      return next
+    })
+  }
+
+  function deleteLocalMeta(slug: string) {
+    setMeta(prev => {
+      const next = { ...prev }
+      delete next[slug]
+      return next
+    })
+  }
+
+  return { meta, updateLocalFavorite, renameLocalMeta, deleteLocalMeta }
 }

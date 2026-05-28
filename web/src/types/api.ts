@@ -11,6 +11,10 @@ export interface ComicListResponse {
   page_size: number
 }
 
+export interface RenameComicResponse {
+  comic: Comic
+}
+
 export interface PageListResponse {
   slug: string
   name: string

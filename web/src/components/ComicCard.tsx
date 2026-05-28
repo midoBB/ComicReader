@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router'
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { thumbnailUrl } from '../api/client'
 import type { Comic, ComicMeta } from '../types/api'
 
@@ -6,10 +8,13 @@ interface Props {
   comic: Comic
   meta?: ComicMeta
   onToggleFavorite?: (fav: boolean) => void
+  onRename?: () => void
+  onDelete?: () => void
 }
 
-export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
+export function ComicCard({ comic, meta, onToggleFavorite, onRename, onDelete }: Props) {
   const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
   const isFavorite = meta?.is_favorite ?? false
   const isNew = !(meta?.opened ?? false)
   const lastPage = meta?.last_page ?? 0
@@ -54,6 +59,39 @@ export function ComicCard({ comic, meta, onToggleFavorite }: Props) {
         >
           {isFavorite ? '★' : '☆'}
         </button>
+
+        <div className="comic-menu-wrap" onClick={e => e.stopPropagation()}>
+          <button
+            onClick={() => setMenuOpen(open => !open)}
+            title="More actions"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            className="btn-overflow"
+          >
+            <MoreVertical size={17} />
+          </button>
+          {menuOpen && (
+            <div className="comic-action-menu" role="menu">
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setMenuOpen(false); onRename?.() }}
+              >
+                <Pencil size={14} />
+                Rename
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="danger"
+                onClick={() => { setMenuOpen(false); onDelete?.() }}
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
 
         {hasProgress && (
           <div className="progress-track">

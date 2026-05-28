@@ -5,7 +5,7 @@ After=network-online.target
 [Container]
 Image=comicreader:latest
 PublishPort=8386:8386
-Volume=/path/to/your/comics:/manga:ro
+Volume=/path/to/your/comics:/manga
 Volume=comicreader-data:/data
 
 [Install]

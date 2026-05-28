@@ -30,6 +30,8 @@ func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	g.GET("/comics/:slug/pages", h.listPages)
 	g.GET("/comics/:slug/pages/:page", h.getPage)
 	g.GET("/comics/:slug/meta", h.getComicMeta)
+	g.PUT("/comics/:slug/rename", h.renameComic)
+	g.DELETE("/comics/:slug", h.deleteComic)
 	g.PUT("/comics/:slug/favorite", h.setFavorite)
 	g.PUT("/comics/:slug/opened", h.markOpened)
 	g.PUT("/comics/:slug/progress", h.setProgress)
